@@ -1,4 +1,4 @@
-const { default: makeWASocket, useMultiFileAuthState } = require('@whiskeysockets/baileys')
+const { default: makeWASocket, useMultiFileAuthState, Browsers } = require('@whiskeysockets/baileys')
 const P = require('pino')
 require('./config.js')
 
@@ -38,9 +38,40 @@ const menuList = {
 
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState('auth_info')
-  const sock = makeWASocket({ logger: P({ level: 'silent' }), auth: state, browser: ["HEHE-MD-BOT", "Chrome", "1.0.0"] })
+  const sock = makeWASocket({
+    logger: P({ level: 'silent' }),
+    auth: state,
+    browser: Browsers.macOS('Desktop'),
+    printQRInTerminal: false
+  })
+
   sock.ev.on('creds.update', saveCreds)
-  sock.ev.on('connection.update', u => { if (u.connection==='open') console.log('✅ HEHE-MD-BOT FULL CONNECTED') })
+
+  // PAIR CODE FOR RAILWAY - YOUR NUMBER
+  if (!sock.authState.creds.registered) {
+    const phoneNumber = '256755289363'
+    console.log(`Waiting 5s to request pair code for ${phoneNumber}...`)
+    setTimeout(async () => {
+      try {
+        const code = await sock.requestPairingCode(phoneNumber)
+        console.log(`\n==============================`)
+        console.log(`🔥 PAIR CODE FOR ${phoneNumber}: ${code}`)
+        console.log(`==============================`)
+        console.log(`Go to WhatsApp > Settings > Linked Devices > Link with phone number > Paste code`)
+        console.log(`==============================\n`)
+      } catch (e) {
+        console.log('Failed to get pairing code:', e.message)
+      }
+    }, 5000)
+  }
+
+  sock.ev.on('connection.update', u => {
+    if (u.connection==='open') console.log('✅ HEHE-MD-BOT FULL CONNECTED - 300 CMDS ACTIVE')
+    if (u.connection==='close') {
+      console.log('Connection closed, restarting in 3s...')
+      setTimeout(startBot, 3000)
+    }
+  })
 
   sock.ev.on('messages.upsert', async ({ messages }) => {
     const m = messages[0]
