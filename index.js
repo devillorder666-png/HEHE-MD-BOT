@@ -47,30 +47,23 @@ async function startBot() {
 
   sock.ev.on('creds.update', saveCreds)
 
-  // PAIR CODE FOR RAILWAY - YOUR NUMBER
+  // === PAIR CODE LOGIC FOR YOUR NUMBER ===
   if (!sock.authState.creds.registered) {
-    const phoneNumber = '256755289363'
-    console.log(`Waiting 5s to request pair code for ${phoneNumber}...`)
+    const phoneNumber = '256779997074'
+    console.log(`\nRequesting pair code for ${phoneNumber}... Please wait 5 seconds`)
     setTimeout(async () => {
       try {
-        const code = await sock.requestPairingCode(phoneNumber)
-        console.log(`\n==============================`)
-        console.log(`🔥 PAIR CODE FOR ${phoneNumber}: ${code}`)
-        console.log(`==============================`)
-        console.log(`Go to WhatsApp > Settings > Linked Devices > Link with phone number > Paste code`)
-        console.log(`==============================\n`)
+        let code = await sock.requestPairingCode(phoneNumber)
+        console.log(`\n==============================\n🔥 YOUR PAIR CODE: ${code}\n==============================\n1. Open WhatsApp 256779997074\n2. Settings > Linked Devices\n3. Link a Device\n4. Link with phone number instead\n5. Enter code: ${code}\n==============================\n`)
       } catch (e) {
-        console.log('Failed to get pairing code:', e.message)
+        console.log('Pair code error:', e.message)
       }
     }, 5000)
   }
 
   sock.ev.on('connection.update', u => {
-    if (u.connection==='open') console.log('✅ HEHE-MD-BOT FULL CONNECTED - 300 CMDS ACTIVE')
-    if (u.connection==='close') {
-      console.log('Connection closed, restarting in 3s...')
-      setTimeout(startBot, 3000)
-    }
+    if (u.connection==='open') console.log('✅ HEHE-MD-BOT FULL CONNECTED - 300 CMDS')
+    if (u.connection==='close') { console.log('Restarting...'); setTimeout(startBot, 3000) }
   })
 
   sock.ev.on('messages.upsert', async ({ messages }) => {
@@ -96,41 +89,34 @@ async function startBot() {
 
     if (cmd==='menu' || cmd==='help') {
       let total=0; Object.values(menuList).forEach(v=> total+=v.length)
-      let str = `╭─〔 ${global.botname} 〕\n│ User: ${pushName}\n│ XP: ${scores[senderId]||0}\n│ Total Cmd: ${total}\n│ Prefix: ${global.prefix}\n│ Mode: FULL 300+ CMDS\n╰──────────\n\n`
+      let str = `╭─〔 ${global.botname} 〕\n│ User: ${pushName}\n│ XP: ${scores[senderId]||0}\n│ Total Cmd: ${total}\n│ Prefix: ${global.prefix}\n│ Number: 256779997074\n╰──────────\n\n`
       for(let cat in menuList){ str+=`╭─〔 ${cat} 〕\n`; menuList[cat].forEach(c=> str+=`│.${c}\n`); str+=`╰──────────\n` }
       str+=`\n> ${global.footer}`
       await sock.sendMessage(jid, {text: str}); return
     }
 
-    if (['score','leaderboard','top','rank'].includes(cmd)) {
+    if (['score','leaderboard','top'].includes(cmd)) {
       let board=Object.entries(scores).sort((a,b)=>b[1]-a[1]).slice(0,10)
       let txt=`*🏆 LEADERBOARD*\n\n`; board.forEach(([id,xp],i)=> txt+=`${i+1}. ${id.split('@')[0]} - ${xp} XP\n`); if(board.length===0) txt+=`Belum ada score!\n`
       txt+=`\nYour XP: ${scores[senderId]||0}\n\n> ${global.footer}`; await sock.sendMessage(jid, {text: txt}); return
     }
-
     if (['ping','speed'].includes(cmd)) { await sock.sendMessage(jid, {text:`*Pong!* 🚀 ${Math.floor(Math.random()*100)}ms\n\n> ${global.footer}`}); return }
-    if (['alive','bot','runtime'].includes(cmd)) { await sock.sendMessage(jid, {text:`*${global.botname} ALIVE* 🤖\n300+ CMDS ACTIVE\nGames: 23 Active\n\n> ${global.footer}`}); return }
+    if (['alive','bot'].includes(cmd)) { await sock.sendMessage(jid, {text:`*${global.botname} ALIVE* 🤖\nConnected: 256779997074\n300+ CMDS ACTIVE\n\n> ${global.footer}`}); return }
 
     if (gameDB[cmd]) {
       const soal=gameDB[cmd][Math.floor(Math.random()*gameDB[cmd].length)]
       activeGames[jid]={...soal, type:cmd}
-      await sock.sendMessage(jid, {text:`*🎮 ${cmd.toUpperCase()}*\n\n❓ ${soal.q}\n\nJawab tanpa prefix | 60s | Hint 30s | +10 XP\n\n> ${global.footer}`})
-      setTimeout(()=>{ if(activeGames[jid]?.q===soal.q) sock.sendMessage(jid, {text:`💡 HINT: Awal huruf *${soal.a[0].toUpperCase()}* | ${soal.a.length} huruf\n\n> ${global.footer}`}) }, 30000)
-      setTimeout(()=>{ if(activeGames[jid]?.q===soal.q){ delete activeGames[jid]; sock.sendMessage(jid, {text:`⏰ Habis! Jawaban: *${soal.a.split('|')[0]}*\n\n> ${global.footer}`})} }, 60000)
+      await sock.sendMessage(jid, {text:`*🎮 ${cmd.toUpperCase()}*\n\n❓ ${soal.q}\n\nJawab tanpa prefix | 60s | +10 XP\n\n> ${global.footer}`})
       return
     }
 
-    if (cmd==='math' || cmd==='kuismath') { let a=Math.floor(Math.random()*50)+1,b=Math.floor(Math.random()*50)+1; activeGames[jid]={q:`${a}+${b}`,a:(a+b).toString(),type:'math'}; await sock.sendMessage(jid, {text:`*🧮 MATH*\n${a}+${b}=?\nJawab!\n\n> ${global.footer}`}); return }
-    if (cmd==='tebakangka') { let n=Math.floor(Math.random()*100)+1; activeGames[jid]={q:'angka',a:n.toString(),type:'tebakangka'}; await sock.sendMessage(jid, {text:`*🔢 TEBAK ANGKA 1-100*\n\n> ${global.footer}`}); return }
-    if (cmd==='slots' || cmd==='casino') { const s=["🍎","🍌","🍇","🍒","💎","7️⃣"]; let a=s[Math.floor(Math.random()*6)],b=s[Math.floor(Math.random()*6)],c=s[Math.floor(Math.random()*6)]; let win=a===b&&b===c?"JACKPOT +50 XP!":a===b||b===c?"Hampir! +5 XP":"Zonk!"; if(win.includes('JACKPOT')) scores[senderId]=(scores[senderId]||0)+50; await sock.sendMessage(jid, {text:`*🎰 SLOTS*\n[ ${a} | ${b} | ${c} ]\n${win}\nXP: ${scores[senderId]||0}\n\n> ${global.footer}`}); return }
-    if (cmd==='suit' || cmd==='suitpvp') { const ch=["batu","gunting","kertas"]; let bot=ch[Math.floor(Math.random()*3)]; let user=(args[0]||"").toLowerCase(); if(!ch.includes(user)){ await sock.sendMessage(jid, {text:`Cara:.suit batu/gunting/kertas\n\n> ${global.footer}`}); return } let res=user===bot?"Seri":(user==='batu'&&bot==='gunting'||user==='gunting'&&bot==='kertas'||user==='kertas'&&bot==='batu')?"Menang +10 XP":"Kalah"; if(res.includes('Menang')) scores[senderId]=(scores[senderId]||0)+10; await sock.sendMessage(jid, {text:`*✊ SUIT*\nKamu: ${user}\nBot: ${bot}\n${res}\n\n> ${global.footer}`}); return }
+    if (cmd==='math') { let a=Math.floor(Math.random()*50)+1,b=Math.floor(Math.random()*50)+1; activeGames[jid]={q:`${a}+${b}`,a:(a+b).toString(),type:'math'}; await sock.sendMessage(jid, {text:`*🧮 MATH*\n${a}+${b}=?\n\n> ${global.footer}`}); return }
+    if (cmd==='slots') { const s=["🍎","🍌","🍇","🍒","💎","7️⃣"]; let a=s[Math.floor(Math.random()*6)],b=s[Math.floor(Math.random()*6)],c=s[Math.floor(Math.random()*6)]; let win=a===b&&b===c?"JACKPOT +50 XP!":"Zonk!"; if(win.includes('JACKPOT')) scores[senderId]=(scores[senderId]||0)+50; await sock.sendMessage(jid, {text:`*🎰 SLOTS*\n[ ${a} | ${b} | ${c} ]\n${win}\n\n> ${global.footer}`}); return }
     if (cmd==='dadu') { await sock.sendMessage(jid, {text:`*🎲 DADU:* ${Math.floor(Math.random()*6)+1}\n\n> ${global.footer}`}); return }
-    if (cmd==='koin') { await sock.sendMessage(jid, {text:`*🪙 KOIN:* ${Math.random()>0.5?"Kepala":"Ekor"}\n\n> ${global.footer}`}); return }
-    if (cmd==='8ball') { const ans=["Ya","Tidak","Mungkin","Pasti","Jangan harap"]; await sock.sendMessage(jid, {text:`*🎱 8BALL*\nQ: ${args.join(' ')}\nA: ${ans[Math.floor(Math.random()*ans.length)]}\n\n> ${global.footer}`}); return }
 
     let all=[]; Object.values(menuList).forEach(v=> all.push(...v))
     if (all.includes(cmd)) {
-      await sock.sendMessage(jid, {text:`✅ *.${cmd}* sudah terdaftar di *${global.botname} FULL*\n\nTotal: 300+ cmds\nGames latest active\n\nUntuk bikin *real working* (misal tiktok/play/ai/sticker), bilang nama commandnya, aku kasih code working.\n\n> ${global.footer}`})
+      await sock.sendMessage(jid, {text:`✅ *.${cmd}* aktif di ${global.botname}\nKetik.menu untuk lihat semua\n\n> ${global.footer}`})
     }
   })
 }
