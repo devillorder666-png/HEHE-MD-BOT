@@ -1,0 +1,7 @@
+global.owner = "256755289363"
+global.botname = "HEHE-MD-BOT"
+global.footer = "© HEHE-MD-BOT 2026"
+global.wm = "HEHE-MD-BOT"
+global.packname = "HEHE-MD-BOT"
+global.author = "HEHE"
+global.prefix = "."
